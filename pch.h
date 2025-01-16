@@ -23,5 +23,11 @@
 #endif
 
 #include "baselogic.h"
+#include "6502.h"
+#include "apu.h"
+#include "ppu.h"
+#include "board.h"
+#include "famicom.h"
+#include "core.h"
 #include "sound.h"
 #include "video.h"

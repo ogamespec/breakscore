@@ -425,14 +425,6 @@ namespace PPUSim
 
 		void SetPDBit(size_t n, BaseLogic::TriState bit_val);
 
-		void GetDebugInfo_Wires(PPU_Interconnects& wires);
-
-		void GetDebugInfo_FSMStates(PPU_FSMStates& fsm_states);
-
-		void GetDebugInfo_OAMEval(OAMEvalWires& wires);
-
-		void GetDebugInfo_Regs(PPU_Registers& regs);
-
 		size_t GetHCounter();
 		size_t GetVCounter();
 
@@ -470,18 +462,5 @@ namespace PPUSim
 		/// </summary>
 		/// <param name="volts">Noise +/- value. 0 to disable.</param>
 		void SetCompositeNoise(float volts);
-
-		uint8_t Dbg_OAMReadByte(size_t addr);
-		uint8_t Dbg_TempOAMReadByte(size_t addr);
-		void Dbg_OAMWriteByte(size_t addr, uint8_t val);
-		void Dbg_TempOAMWriteByte(size_t addr, uint8_t val);
-		uint8_t Dbg_CRAMReadByte(size_t addr);
-		void Dbg_CRAMWriteByte(size_t addr, uint8_t val);
-		uint8_t Dbg_GetCRAMAddress();
-		uint16_t Dbg_GetPPUAddress();
-		void Dbg_RenderAlwaysEnabled(bool enable);
-
-		uint32_t Dbg_ReadRegister(int ofs);
-		void Dbg_WriteRegister(int ofs, uint32_t val);
 	};
 }

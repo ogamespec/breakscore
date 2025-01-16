@@ -41,7 +41,7 @@ int main(int argc, char** argv) {
 		printf("Loading ROM: %s\n", argv[1]);
 	}
 
-	CreateBoard((char*)"NESBoard", (char*)"RP2A03G", (char*)"RP2C02G", (char*)"NES");
+	CreateBoard((char*)"HVC", (char*)"RP2A03G", (char*)"RP2C02G", (char*)"Fami");
 	Reset();
 
 	// Make additional settings for emulation in the Breaknes casual environment

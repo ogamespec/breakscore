@@ -48,11 +48,6 @@ namespace Breaknes
 		BaseLogic::TriState gnd = BaseLogic::TriState::Zero;
 		BaseLogic::TriState vdd = BaseLogic::TriState::One;
 
-		RegDumper* ppu_regdump = nullptr;
-		RegDumper* apu_regdump = nullptr;
-		size_t prev_phi_counter_for_ppuregdump = 0;
-		size_t prev_phi_counter_for_apuregdump = 0;
-
 		void TreatCoreForRegdump(uint16_t addr_bus, uint8_t data_bus, BaseLogic::TriState phi2, BaseLogic::TriState rnw);
 
 	public:
@@ -112,23 +107,6 @@ namespace Breaknes
 		virtual void SampleAudioSignal(float* sample);
 
 		/// <summary>
-		/// Load APU/PPU registers dump (APUPlayer/PPUPlayer only)
-		/// </summary>
-		/// <param name="data">RegDumpEntry records</param>
-		/// <param name="data_size">Dump size (bytes)</param>
-		virtual void LoadRegDump(uint8_t* data, size_t data_size);
-
-		/// <summary>
-		/// Enable/disable saving the history of PPU register accesses.
-		/// </summary>
-		virtual void EnablePpuRegDump(bool enable, char* regdump_dir);
-
-		/// <summary>
-		/// Enable/disable saving the history of APU register accesses.
-		/// </summary>
-		virtual void EnableApuRegDump(bool enable, char* regdump_dir);
-
-		/// <summary>
 		/// Get audio signal settings that help with its rendering on the consumer side.
 		/// </summary>
 		/// <param name="features"></param>
@@ -159,14 +137,6 @@ namespace Breaknes
 		virtual size_t GetVCounter();
 
 		/// <summary>
-		/// Forcibly enable rendering ($2001[3] = $2001[4] always equals 1). 
-		/// Used for debugging PPU signals, when the CPU I/F register dump is limited, or when you want to get faster simulation results. 
-		/// Keep in mind that with permanently enabled rendering the PPU becomes unstable and this hack should be applied when you know what you're doing.
-		/// </summary>
-		/// <param name="enable"></param>
-		virtual void RenderAlwaysEnabled(bool enable);
-
-		/// <summary>
 		/// Get video signal settings that help with its rendering on the consumer side.
 		/// </summary>
 		/// <param name="features"></param>
@@ -195,11 +165,19 @@ namespace Breaknes
 		/// </summary>
 		/// <param name="volts"></param>
 		virtual void SetNoiseLevel(float volts);
+	};
 
-		/// <summary>
-		/// Return all core debugging information for BreaksDebug.
-		/// </summary>
-		/// <param name="info"></param>
-		virtual void GetAllCoreDebugInfo(M6502Core::DebugInfo* info);
+	class BoardFactory
+	{
+		std::string board_name = "Bogus";
+		APUSim::Revision apu_rev = APUSim::Revision::Unknown;
+		PPUSim::Revision ppu_rev = PPUSim::Revision::Unknown;
+		Mappers::ConnectorType p1_type = Mappers::ConnectorType::None;
+
+	public:
+		BoardFactory(std::string board, std::string apu, std::string ppu, std::string p1);
+		~BoardFactory();
+
+		Board* CreateInstance();
 	};
 }
