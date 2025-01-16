@@ -24,12 +24,23 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\6502.cpp" />
+    <ClCompile Include="..\aorom.cpp" />
     <ClCompile Include="..\apu.cpp" />
     <ClCompile Include="..\baselogic.cpp" />
     <ClCompile Include="..\board.cpp" />
+    <ClCompile Include="..\cart.cpp" />
+    <ClCompile Include="..\cd4021.cpp" />
     <ClCompile Include="..\core.cpp" />
     <ClCompile Include="..\famicom.cpp" />
+    <ClCompile Include="..\famicontr.cpp" />
+    <ClCompile Include="..\io.cpp" />
+    <ClCompile Include="..\ls139.cpp" />
+    <ClCompile Include="..\ls161.cpp" />
+    <ClCompile Include="..\ls32.cpp" />
+    <ClCompile Include="..\ls368.cpp" />
+    <ClCompile Include="..\ls373.cpp" />
     <ClCompile Include="..\main.cpp" />
+    <ClCompile Include="..\nrom.cpp" />
     <ClCompile Include="..\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
@@ -38,18 +49,35 @@
     </ClCompile>
     <ClCompile Include="..\ppu.cpp" />
     <ClCompile Include="..\sound.cpp" />
+    <ClCompile Include="..\sram.cpp" />
+    <ClCompile Include="..\unrom.cpp" />
     <ClCompile Include="..\video.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\6502.h" />
+    <ClInclude Include="..\aorom.h" />
     <ClInclude Include="..\apu.h" />
     <ClInclude Include="..\baselogic.h" />
     <ClInclude Include="..\board.h" />
+    <ClInclude Include="..\cart.h" />
+    <ClInclude Include="..\cd4021.h" />
     <ClInclude Include="..\core.h" />
     <ClInclude Include="..\famicom.h" />
+    <ClInclude Include="..\famicontr.h" />
+    <ClInclude Include="..\io.h" />
+    <ClInclude Include="..\iodevice.h" />
+    <ClInclude Include="..\ls139.h" />
+    <ClInclude Include="..\ls161.h" />
+    <ClInclude Include="..\ls32.h" />
+    <ClInclude Include="..\ls368.h" />
+    <ClInclude Include="..\ls373.h" />
+    <ClInclude Include="..\nes_header.h" />
+    <ClInclude Include="..\nrom.h" />
     <ClInclude Include="..\pch.h" />
     <ClInclude Include="..\ppu.h" />
     <ClInclude Include="..\sound.h" />
+    <ClInclude Include="..\sram.h" />
+    <ClInclude Include="..\unrom.h" />
     <ClInclude Include="..\video.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
