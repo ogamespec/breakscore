@@ -2,7 +2,7 @@
 
 ![breakscore_logo](/imgstore/breakscore_logo.png)
 
-Famicom functional simulator.
+Famicom functional simulator, using decapped chip photos.
 
 This repository is a "crystallisation" of the main repository [breaknes](https://github.com/emu-russia/breaknes), which contains a lot of obscure stuff. All functional chipset simulators were "amalgamated" into .cpp files (6502.cpp, apu.cpp, ppu.cpp), as a result the rest of the incomprehensible stuff is now all there.
 
