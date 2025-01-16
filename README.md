@@ -1,2 +1,5 @@
 # breakscore
-Famicom functional simulator
+
+![breakscore_logo](/imgstore/breakscore_logo.png)
+
+Famicom functional simulator.
