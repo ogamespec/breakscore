@@ -8,7 +8,7 @@ VideoRender::VideoRender()
 	}
 
 	SDL_Window* window = SDL_CreateWindow(
-		"Breaknes",
+		"breaks",
 		SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
 		SCREEN_WIDTH * ScaleFactor, SCREEN_HEIGHT * ScaleFactor,
 		0);

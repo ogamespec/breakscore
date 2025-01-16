@@ -34,7 +34,7 @@ int main(int argc, char** argv) {
 	SDL_Thread* worker{};
 
 	if (argc <= 1) {
-		printf("Use: breaknes <file.nes>\n");
+		printf("Use: breakscore <file.nes>\n");
 		return -1;
 	}
 	else {
@@ -44,7 +44,7 @@ int main(int argc, char** argv) {
 	CreateBoard((char*)"HVC", (char*)"RP2A03G", (char*)"RP2C02G", (char*)"Fami");
 	Reset();
 
-	// Make additional settings for emulation in the Breaknes casual environment
+	// Make additional settings for emulation in the casual environment
 
 	SetOamDecayBehavior(PPUSim::OAMDecayBehavior::Keep);
 	SetRAWColorMode(true);

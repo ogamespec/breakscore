@@ -70,9 +70,6 @@ namespace Breaknes
 		CPU_RnW = outputs[(size_t)APUSim::APU_Output::RnW];
 		M2 = outputs[(size_t)APUSim::APU_Output::M2];
 
-		// Accesses by the embedded core to APU registers are still broadcast to the address bus via the multiplexer.
-		TreatCoreForRegdump(addr_bus, data_bus, apu->GetPHI2(), CPU_RnW);
-
 		nRDP0 = outputs[(size_t)APUSim::APU_Output::n_IN0];
 		nRDP1 = outputs[(size_t)APUSim::APU_Output::n_IN1];
 		OUT_0 = outputs[(size_t)APUSim::APU_Output::OUT_0];

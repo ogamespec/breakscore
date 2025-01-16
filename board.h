@@ -48,8 +48,6 @@ namespace Breaknes
 		BaseLogic::TriState gnd = BaseLogic::TriState::Zero;
 		BaseLogic::TriState vdd = BaseLogic::TriState::One;
 
-		void TreatCoreForRegdump(uint16_t addr_bus, uint8_t data_bus, BaseLogic::TriState phi2, BaseLogic::TriState rnw);
-
 	public:
 		Board(APUSim::Revision apu_rev, PPUSim::Revision ppu_rev, Mappers::ConnectorType p1);
 		virtual ~Board();

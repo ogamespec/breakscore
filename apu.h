@@ -325,12 +325,6 @@ namespace APUSim
 		void sim();
 		void sim_DMA_Buffer();
 		void sim_AddressMux();
-
-		uint32_t Get_DMABuffer();
-		uint32_t Get_DMAAddress();
-
-		void Set_DMABuffer(uint32_t value);
-		void Set_DMAAddress(uint32_t value);
 	};
 
 	// Differential Pulse-code Modulation (DPCM) Channel
@@ -448,27 +442,6 @@ namespace APUSim
 		~DpcmChan();
 
 		void sim();
-
-		uint32_t Get_FreqReg();
-		uint32_t Get_SampleReg();
-		uint32_t Get_SampleCounter();
-		uint32_t Get_SampleBuffer();
-		uint32_t Get_SampleBitCounter();
-		uint32_t Get_AddressReg();
-		uint32_t Get_AddressCounter();
-		uint32_t Get_Output();
-
-		void Set_FreqReg(uint32_t value);
-		void Set_SampleReg(uint32_t value);
-		void Set_SampleCounter(uint32_t value);
-		void Set_SampleBuffer(uint32_t value);
-		void Set_SampleBitCounter(uint32_t value);
-		void Set_AddressReg(uint32_t value);
-		void Set_AddressCounter(uint32_t value);
-		void Set_Output(uint32_t value);
-
-		bool GetDpcmEnable();
-		void SetDpcmEnable(bool enable);
 	};
 
 	// Length Counters
@@ -501,12 +474,6 @@ namespace APUSim
 		~LengthCounter();
 
 		void sim(size_t bit_ena, BaseLogic::TriState WriteEn, BaseLogic::TriState LC_CarryIn, BaseLogic::TriState& LC_NoCount);
-
-		uint8_t Debug_GetCnt();
-		void Debug_SetCnt(uint8_t value);
-
-		bool Debug_GetEnable();
-		void Debug_SetEnable(bool enable);
 	};
 
 	// Envelope Unit
@@ -533,16 +500,6 @@ namespace APUSim
 
 		void sim(BaseLogic::TriState V[4], BaseLogic::TriState WR_Reg, BaseLogic::TriState WR_LC);
 		BaseLogic::TriState get_LC();
-
-		void Debug_Get(uint32_t& VolumeReg, uint32_t& DecayCounter, uint32_t& EnvCounter);
-
-		uint32_t Debug_Get_VolumeReg();
-		uint32_t Debug_Get_DecayCounter();
-		uint32_t Debug_Get_EnvCounter();
-
-		void Debug_Set_VolumeReg(uint32_t val);
-		void Debug_Set_DecayCounter(uint32_t val);
-		void Debug_Set_EnvCounter(uint32_t val);
 	};
 
 	// Noise Channel
@@ -598,9 +555,6 @@ namespace APUSim
 
 		void sim();
 		BaseLogic::TriState get_LC();
-
-		uint32_t Get_FreqReg();
-		void Set_FreqReg(uint32_t value);
 	};
 
 	// Square Channels
@@ -692,20 +646,6 @@ namespace APUSim
 
 		void sim(BaseLogic::TriState WR0, BaseLogic::TriState WR1, BaseLogic::TriState WR2, BaseLogic::TriState WR3, BaseLogic::TriState NOSQ, BaseLogic::TriState* SQ_Out);
 		BaseLogic::TriState get_LC();
-
-		uint32_t Get_FreqReg();
-		uint32_t Get_ShiftReg();
-		uint32_t Get_FreqCounter();
-		uint32_t Get_SweepReg();
-		uint32_t Get_SweepCounter();
-		uint32_t Get_DutyCounter();
-
-		void Set_FreqReg(uint32_t value);
-		void Set_ShiftReg(uint32_t value);
-		void Set_FreqCounter(uint32_t value);
-		void Set_SweepReg(uint32_t value);
-		void Set_SweepCounter(uint32_t value);
-		void Set_DutyCounter(uint32_t value);
 	};
 
 	// Triangle Channel
@@ -747,18 +687,6 @@ namespace APUSim
 
 		void sim();
 		BaseLogic::TriState get_LC();
-
-		uint32_t Get_LinearReg();
-		uint32_t Get_LinearCounter();
-		uint32_t Get_FreqReg();
-		uint32_t Get_FreqCounter();
-		uint32_t Get_OutputCounter();
-
-		void Set_LinearReg(uint32_t value);
-		void Set_LinearCounter(uint32_t value);
-		void Set_FreqReg(uint32_t value);
-		void Set_FreqCounter(uint32_t value);
-		void Set_OutputCounter(uint32_t value);
 	};
 
 	// Register Decoder
@@ -835,14 +763,6 @@ namespace APUSim
 
 		void sim_DataBusInput(uint8_t* data);
 		void sim_DataBusOutput(uint8_t* data);
-
-		uint32_t Get_DBOutputLatch();
-		uint32_t Get_DBInputLatch();
-		uint32_t Get_OutReg();
-
-		void Set_DBOutputLatch(uint32_t value);
-		void Set_DBInputLatch(uint32_t value);
-		void Set_OutReg(uint32_t value);
 	};
 
 	// Obtaining the analog value of the AUX A/B signals from the digital outputs of the generators.
