@@ -86,7 +86,7 @@ namespace PPUSim
 	};
 
 	/// <summary>
-	/// How to handle the OAM Corruption effect.
+	/// How to handle the OAM Decay effect.
 	/// </summary>
 	enum class OAMDecayBehavior
 	{

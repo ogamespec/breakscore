@@ -3011,7 +3011,7 @@ namespace PPUSim
 
 		switch (ppu->rev)
 		{
-			// For the PAL PPU, the $2003 write delay is screwed on. This is most likely how they fight OAM Corruption.
+			// For the PAL PPU, the $2003 write delay is screwed on. This is most likely how they fight OAM Decay.
 
 		case Revision::RP2C07_0:
 		case Revision::UMC_UA6538:
