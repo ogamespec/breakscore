@@ -12,7 +12,7 @@ This repository is a "crystallisation" of the main repository [breaknes](https:/
 
 ## Build for Windows
 
-Use Windows and VS2022. Open vs2022/breakscore.sln and click the Build button with your left heel.
+Use Windows and VS2026. Open vs2026/breakscore.sln and click the Build button with your left heel.
 
 ## Build for Linux
 
