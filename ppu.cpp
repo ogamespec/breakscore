@@ -526,7 +526,7 @@ namespace PPUSim
 		}
 	}
 
-	// OAM FIFO (Motion picture buffer memory)
+	// Object FIFO (Motion picture buffer memory)
 
 	FIFO::FIFO(PPU* parent)
 	{
@@ -2064,30 +2064,30 @@ namespace PPUSim
 		}
 	}
 
-	// Pattern Address Generator
+	// Picture Address Register
 
-	PATGen::PATGen(PPU* parent)
+	PAR::PAR(PPU* parent)
 	{
 		ppu = parent;
 	}
 
-	PATGen::~PATGen()
+	PAR::~PAR()
 	{
 	}
 
-	void PATGen::sim()
+	void PAR::sim()
 	{
 		sim_Control();
 		sim_VInv();
-		sim_PatBitsInv();
-		sim_PatBit4();
-		sim_PatBits();
+		sim_ParBitsInv();
+		sim_ParBit4();
+		sim_ParBits();
 
 		TriState n_H1_D = ppu->wire.nH1_Dash;
 		ppu->wire.PAD[3] = NOT(n_H1_D);
 	}
 
-	void PATGen::sim_Control()
+	void PAR::sim_Control()
 	{
 		TriState n_PCLK = ppu->wire.n_PCLK;
 		TriState H0_DD = ppu->wire.H0_Dash2;
@@ -2105,7 +2105,7 @@ namespace PPUSim
 		ppu->wire.PAD[12] = pad12_latch.nget();
 	}
 
-	void PATGen::sim_VInv()
+	void PAR::sim_VInv()
 	{
 		TriState n_PCLK = ppu->wire.n_PCLK;
 		TriState n_SH2 = ppu->wire.n_SH2;
@@ -2114,7 +2114,7 @@ namespace PPUSim
 		VINV = NOT(NOT(VINV_FF.get()));
 	}
 
-	void PATGen::sim_PatBitsInv()
+	void PAR::sim_ParBitsInv()
 	{
 		TriState n_PCLK = ppu->wire.n_PCLK;
 		TriState PAR_O = ppu->fsm.PARO;
@@ -2133,7 +2133,7 @@ namespace PPUSim
 		ppu->wire.PAD[2] = pad2_latch.nget();
 	}
 
-	void PATGen::sim_PatBit4()
+	void PAR::sim_ParBit4()
 	{
 		TriState n_PCLK = ppu->wire.n_PCLK;
 		TriState val_OB = ppu->wire.OB[0];
@@ -2149,7 +2149,7 @@ namespace PPUSim
 		ppu->wire.PAD[4] = pad4_latch.nget();
 	}
 
-	void PATGen::sim_PatBits()
+	void PAR::sim_ParBits()
 	{
 		TriState n_PCLK = ppu->wire.n_PCLK;
 		TriState PAR_O = ppu->fsm.PARO;
@@ -2160,7 +2160,7 @@ namespace PPUSim
 		}
 	}
 
-	void PatBitInv::sim(TriState n_PCLK, TriState O, TriState INV, TriState val_in,
+	void ParBitInv::sim(TriState n_PCLK, TriState O, TriState INV, TriState val_in,
 		TriState& val_out)
 	{
 		in_latch.set(val_in, n_PCLK);
@@ -2168,7 +2168,7 @@ namespace PPUSim
 		val_out = NOT(MUX(INV, out_latch.nget(), NOT(out_latch.nget())));
 	}
 
-	void PatBit::sim(TriState n_PCLK, TriState O, TriState val_OB, TriState val_PD, TriState PAR_O,
+	void ParBit::sim(TriState n_PCLK, TriState O, TriState val_OB, TriState val_PD, TriState PAR_O,
 		TriState& PADx)
 	{
 		pdin_latch.set(NOT(val_PD), n_PCLK);
@@ -2178,29 +2178,28 @@ namespace PPUSim
 		PADx = padx_latch.nget();
 	}
 
-	// Picture Address Register
+	// Tile Counters (nesdev `v`)
 
-	PAR::PAR(PPU* parent)
+	TileCnt::TileCnt(PPU* parent)
 	{
 		ppu = parent;
 	}
 
-	PAR::~PAR()
+	TileCnt::~TileCnt()
 	{
 	}
 
-	void PAR::sim()
+	void TileCnt::sim()
 	{
 		sim_CountersControl();
 		sim_CountersCarry();
-		sim_Control();
 		sim_FVCounter();
 		sim_NTCounters();
 		sim_TVCounter();
 		sim_THCounter();
 	}
 
-	void PAR::sim_CountersControl()
+	void TileCnt::sim_CountersControl()
 	{
 		TriState n_PCLK = ppu->wire.n_PCLK;
 		TriState PCLK = ppu->wire.PCLK;
@@ -2229,7 +2228,7 @@ namespace PPUSim
 		TVSTEP = NOR(NOR(E_EV, TSTEP), PCLK);
 	}
 
-	void PAR::sim_CountersCarry()
+	void TileCnt::sim_CountersCarry()
 	{
 		TriState n_PCLK = ppu->wire.n_PCLK;
 		TriState PCLK = ppu->wire.PCLK;
@@ -2296,7 +2295,91 @@ namespace PPUSim
 		Z_TV = NOR(tvz_latch2.get(), tvstep_latch.get());
 	}
 
-	void PAR::sim_Control()
+	void TileCnt::sim_FVCounter()
+	{
+		TriState PCLK = ppu->wire.PCLK;
+		TriState carry = FVIN;
+
+		for (size_t n = 0; n < 3; n++)
+		{
+			carry = FVCounter[n].sim(PCLK, TVLOAD, TVSTEP, ppu->wire.FV[n], carry, ppu->wire.FVO[n], ppu->wire.n_FVO[n]);
+		}
+	}
+
+	void TileCnt::sim_NTCounters()
+	{
+		TriState PCLK = ppu->wire.PCLK;
+		TriState unused;
+
+		NTHO = NTHCounter.sim(PCLK, THLOAD, THSTEP, ppu->wire.NTH, NTHIN, ppu->wire.NTHOut, unused);
+		NTVO = NTVCounter.sim(PCLK, TVLOAD, TVSTEP, ppu->wire.NTV, NTVIN, ppu->wire.NTVOut, unused);
+	}
+
+	void TileCnt::sim_TVCounter()
+	{
+		TriState PCLK = ppu->wire.PCLK;
+		TriState carry = TVIN;
+
+		for (size_t n = 0; n < 5; n++)
+		{
+			carry = TVCounter[n].sim_res(PCLK, TVLOAD, TVSTEP, ppu->wire.TV[n], carry, Z_TV, ppu->wire.TVO[n], ppu->wire.n_TVO[n]);
+		}
+	}
+
+	void TileCnt::sim_THCounter()
+	{
+		TriState PCLK = ppu->wire.PCLK;
+		TriState carry = THIN;
+
+		for (size_t n = 0; n < 5; n++)
+		{
+			carry = THCounter[n].sim(PCLK, THLOAD, THSTEP, ppu->wire.TH[n], carry, ppu->wire.THO[n], ppu->wire.n_THO[n]);
+		}
+	}
+
+	TriState TileCounterBit::sim(TriState Clock, TriState Load, TriState Step,
+		TriState val_in, TriState carry_in,
+		TriState& val_out, TriState& n_val_out)
+	{
+		auto val = MUX(Step, MUX(Load, MUX(Clock, TriState::Z, ff.get()), val_in), step_latch.nget());
+		ff.set(val);
+		step_latch.set(MUX(carry_in, ff.nget(), ff.get()), Clock);
+		val_out = ff.get();
+		n_val_out = ff.nget();
+		TriState carry_out = NOR(n_val_out, NOT(carry_in));
+		return carry_out;
+	}
+
+	TriState TileCounterBit::sim_res(TriState Clock, TriState Load, TriState Step,
+		TriState val_in, TriState carry_in, TriState Reset,		// Reset: clears not only the contents of the counter's input FF in keep state, but also pulldowns its output value (but NOT complement output)
+		TriState& val_out, TriState& n_val_out)
+	{
+		auto val = MUX(Step, MUX(Load, MUX(Clock, TriState::Z, AND(ff.get(), NOT(Reset))), val_in), step_latch.nget());
+		ff.set(val);
+		step_latch.set(MUX(carry_in, ff.nget(), ff.get()), Clock);
+		val_out = AND(ff.get(), NOT(Reset));
+		n_val_out = ff.nget();
+		TriState carry_out = NOR(n_val_out, NOT(carry_in));
+		return carry_out;
+	}
+
+	// PPU Address Mux
+
+	PAMUX::PAMUX(PPU* parent)
+	{
+		ppu = parent;
+	}
+
+	PAMUX::~PAMUX()
+	{
+	}
+
+	void PAMUX::sim()
+	{
+		sim_Control();
+	}
+
+	void PAMUX::sim_Control()
 	{
 		TriState nH2_D = ppu->wire.nH2_Dash;
 		TriState BLNK = ppu->fsm.BLNK;
@@ -2308,49 +2391,7 @@ namespace PPUSim
 		PAL = NOR(NOT(PAH), DB_PAR);
 	}
 
-	void PAR::sim_FVCounter()
-	{
-		TriState PCLK = ppu->wire.PCLK;
-		TriState carry = FVIN;
-
-		for (size_t n = 0; n < 3; n++)
-		{
-			carry = FVCounter[n].sim(PCLK, TVLOAD, TVSTEP, ppu->wire.FV[n], carry, ppu->wire.FVO[n], ppu->wire.n_FVO[n]);
-		}
-	}
-
-	void PAR::sim_NTCounters()
-	{
-		TriState PCLK = ppu->wire.PCLK;
-		TriState unused;
-
-		NTHO = NTHCounter.sim(PCLK, THLOAD, THSTEP, ppu->wire.NTH, NTHIN, NTHOut, unused);
-		NTVO = NTVCounter.sim(PCLK, TVLOAD, TVSTEP, ppu->wire.NTV, NTVIN, NTVOut, unused);
-	}
-
-	void PAR::sim_TVCounter()
-	{
-		TriState PCLK = ppu->wire.PCLK;
-		TriState carry = TVIN;
-
-		for (size_t n = 0; n < 5; n++)
-		{
-			carry = TVCounter[n].sim_res(PCLK, TVLOAD, TVSTEP, ppu->wire.TV[n], carry, Z_TV, ppu->wire.TVO[n], ppu->wire.n_TVO[n]);
-		}
-	}
-
-	void PAR::sim_THCounter()
-	{
-		TriState PCLK = ppu->wire.PCLK;
-		TriState carry = THIN;
-
-		for (size_t n = 0; n < 5; n++)
-		{
-			carry = THCounter[n].sim(PCLK, THLOAD, THSTEP, ppu->wire.TH[n], carry, ppu->wire.THO[n], ppu->wire.n_THO[n]);
-		}
-	}
-
-	void PAR::sim_PARInputs()
+	void PAMUX::sim_MuxInputs()
 	{
 		TriState BLNK = ppu->fsm.BLNK;
 
@@ -2376,8 +2417,8 @@ namespace PPUSim
 		PAR_in[8] = ppu->wire.TVO[3];
 		PAR_in[9] = ppu->wire.TVO[4];
 
-		FAT_in[10] = PAR_in[10] = NTHOut;
-		FAT_in[11] = PAR_in[11] = NTVOut;
+		FAT_in[10] = PAR_in[10] = ppu->wire.NTHOut;
+		FAT_in[11] = PAR_in[11] = ppu->wire.NTVOut;
 		FAT_in[12] = PAR_in[12] = NOR(ppu->wire.n_FVO[0], NOT(BLNK));
 		FAT_in[13] = PAR_in[13] = NOT(NOR(ppu->wire.FVO[1], NOT(BLNK)));
 
@@ -2388,7 +2429,7 @@ namespace PPUSim
 		PAD_in[13] = TriState::Zero;
 	}
 
-	void PAR::sim_PAROutputs()
+	void PAMUX::sim_MuxOutputs()
 	{
 		TriState PCLK = ppu->wire.PCLK;
 		TriState DB_PAR = ppu->wire.DB_PAR;
@@ -2405,33 +2446,7 @@ namespace PPUSim
 		}
 	}
 
-	TriState PAR_CounterBit::sim(TriState Clock, TriState Load, TriState Step,
-		TriState val_in, TriState carry_in,
-		TriState& val_out, TriState& n_val_out)
-	{
-		auto val = MUX(Step, MUX(Load, MUX(Clock, TriState::Z, ff.get()), val_in), step_latch.nget());
-		ff.set(val);
-		step_latch.set(MUX(carry_in, ff.nget(), ff.get()), Clock);
-		val_out = ff.get();
-		n_val_out = ff.nget();
-		TriState carry_out = NOR(n_val_out, NOT(carry_in));
-		return carry_out;
-	}
-
-	TriState PAR_CounterBit::sim_res(TriState Clock, TriState Load, TriState Step,
-		TriState val_in, TriState carry_in, TriState Reset,		// Reset: clears not only the contents of the counter's input FF in keep state, but also pulldowns its output value (but NOT complement output)
-		TriState& val_out, TriState& n_val_out)
-	{
-		auto val = MUX(Step, MUX(Load, MUX(Clock, TriState::Z, AND(ff.get(), NOT(Reset))), val_in), step_latch.nget());
-		ff.set(val);
-		step_latch.set(MUX(carry_in, ff.nget(), ff.get()), Clock);
-		val_out = AND(ff.get(), NOT(Reset));
-		n_val_out = ff.nget();
-		TriState carry_out = NOR(n_val_out, NOT(carry_in));
-		return carry_out;
-	}
-
-	void PAR_LowBit::sim(TriState PCLK, TriState PARR, TriState DB_PAR, TriState PAL, TriState F_AT,
+	void PAMUX_LowBit::sim(TriState PCLK, TriState PARR, TriState DB_PAR, TriState PAL, TriState F_AT,
 		TriState FAT_in, TriState PAL_in, TriState PAD_in, TriState DB_in,
 		TriState& n_PAx)
 	{
@@ -2443,7 +2458,7 @@ namespace PPUSim
 		n_PAx = out_latch.get();
 	}
 
-	void PAR_HighBit::sim(TriState PCLK, TriState PARR, TriState PAH, TriState F_AT,
+	void PAMUX_HighBit::sim(TriState PCLK, TriState PARR, TriState PAH, TriState F_AT,
 		TriState FAT_in, TriState PAH_in, TriState PAD_in,
 		TriState& n_PAx)
 	{
@@ -2849,16 +2864,18 @@ namespace PPUSim
 	{
 		ppu = parent;
 
-		patgen = new PATGen(ppu);
 		par = new PAR(ppu);
+		tilecnt = new TileCnt(ppu);
+		pamux = new PAMUX(ppu);
 		sccx = new ScrollRegs(ppu);
 		bgcol = new BGCol(ppu);
 	}
 
 	DataReader::~DataReader()
 	{
-		delete patgen;
 		delete par;
+		delete tilecnt;
+		delete pamux;
 		delete sccx;
 		delete bgcol;
 	}
@@ -2866,10 +2883,11 @@ namespace PPUSim
 	void DataReader::sim()
 	{
 		sccx->sim();
+		pamux->sim();
+		tilecnt->sim();
 		par->sim();
-		patgen->sim();
-		par->sim_PARInputs();
-		par->sim_PAROutputs();
+		pamux->sim_MuxInputs();
+		pamux->sim_MuxOutputs();
 		bgcol->sim();
 	}
 

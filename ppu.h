@@ -259,7 +259,7 @@ namespace PPUSim
 		void Dbg_CRAMWriteByte(size_t addr, uint8_t val);
 	};
 
-	// OAM FIFO (Motion picture buffer memory)
+	// Object FIFO (Motion picture buffer memory)
 
 	class FIFO_CounterBit
 	{
@@ -798,9 +798,9 @@ namespace PPUSim
 		OAMDecayBehavior GetOamDecayBehavior();
 	};
 
-	// Pattern Address Generator
+	// Picture Address Register
 
-	class PatBitInv
+	class ParBitInv
 	{
 		BaseLogic::DLatch in_latch;
 		BaseLogic::DLatch out_latch;
@@ -810,7 +810,7 @@ namespace PPUSim
 			BaseLogic::TriState& val_out);
 	};
 
-	class PatBit
+	class ParBit
 	{
 		BaseLogic::DLatch pdin_latch;
 		BaseLogic::DLatch pdout_latch;
@@ -822,12 +822,12 @@ namespace PPUSim
 			BaseLogic::TriState& PADx);
 	};
 
-	class PATGen
+	class PAR
 	{
 		PPU* ppu = nullptr;
 
-		PatBitInv inv_bits[4]{};
-		PatBit bits[7]{};
+		ParBitInv inv_bits[4]{};
+		ParBit bits[7]{};
 
 		BaseLogic::DLatch fnt_latch;
 		BaseLogic::DLatch ob0_latch;
@@ -850,20 +850,20 @@ namespace PPUSim
 
 		void sim_Control();
 		void sim_VInv();
-		void sim_PatBitsInv();
-		void sim_PatBit4();
-		void sim_PatBits();
+		void sim_ParBitsInv();
+		void sim_ParBit4();
+		void sim_ParBits();
 
 	public:
-		PATGen(PPU* parent);
-		~PATGen();
+		PAR(PPU* parent);
+		~PAR();
 
 		void sim();
 	};
 
-	// Picture Address Register
+	// Tile Counters (nesdev `v`)
 
-	class PAR_CounterBit
+	class TileCounterBit
 	{
 		BaseLogic::FF ff;
 		BaseLogic::DLatch step_latch;
@@ -878,29 +878,7 @@ namespace PPUSim
 			BaseLogic::TriState& val_out, BaseLogic::TriState& n_val_out);
 	};
 
-	class PAR_LowBit
-	{
-		BaseLogic::DLatch in_latch;
-		BaseLogic::DLatch out_latch;
-
-	public:
-		void sim(BaseLogic::TriState PCLK, BaseLogic::TriState PARR, BaseLogic::TriState DB_PAR, BaseLogic::TriState PAL, BaseLogic::TriState F_AT,
-			BaseLogic::TriState FAT_in, BaseLogic::TriState PAL_in, BaseLogic::TriState PAD_in, BaseLogic::TriState DB_in,
-			BaseLogic::TriState& n_PAx);
-	};
-
-	class PAR_HighBit
-	{
-		BaseLogic::DLatch in_latch;
-		BaseLogic::DLatch out_latch;
-
-	public:
-		void sim(BaseLogic::TriState PCLK, BaseLogic::TriState PARR, BaseLogic::TriState PAH, BaseLogic::TriState F_AT,
-			BaseLogic::TriState FAT_in, BaseLogic::TriState PAH_in, BaseLogic::TriState PAD_in,
-			BaseLogic::TriState& n_PAx);
-	};
-
-	class PAR
+	class TileCnt
 	{
 		PPU* ppu = nullptr;
 
@@ -914,14 +892,11 @@ namespace PPUSim
 		BaseLogic::DLatch tvz_latch2;
 		BaseLogic::DLatch tvstep_latch;
 
-		PAR_CounterBit FVCounter[3]{};
-		PAR_CounterBit NTHCounter;
-		PAR_CounterBit NTVCounter;
-		PAR_CounterBit TVCounter[5]{};
-		PAR_CounterBit THCounter[5]{};
-
-		PAR_LowBit par_lo[8]{};
-		PAR_HighBit par_hi[6]{};
+		TileCounterBit FVCounter[3]{};
+		TileCounterBit NTHCounter;
+		TileCounterBit NTVCounter;
+		TileCounterBit TVCounter[5]{};
+		TileCounterBit THCounter[5]{};
 
 		BaseLogic::TriState THZB = BaseLogic::TriState::X;
 		BaseLogic::TriState THZ = BaseLogic::TriState::X;
@@ -941,10 +916,53 @@ namespace PPUSim
 		BaseLogic::TriState THIN = BaseLogic::TriState::X;
 		BaseLogic::TriState Z_TV = BaseLogic::TriState::X;
 
-		BaseLogic::TriState NTHOut = BaseLogic::TriState::X;
 		BaseLogic::TriState NTHO = BaseLogic::TriState::X;
-		BaseLogic::TriState NTVOut = BaseLogic::TriState::X;
 		BaseLogic::TriState NTVO = BaseLogic::TriState::X;
+
+		void sim_CountersControl();
+		void sim_CountersCarry();
+		void sim_FVCounter();
+		void sim_NTCounters();
+		void sim_TVCounter();
+		void sim_THCounter();
+
+	public:
+		TileCnt(PPU* parent);
+		~TileCnt();
+
+		void sim();
+	};
+
+	// PPU Address Mux
+
+	class PAMUX_LowBit
+	{
+		BaseLogic::DLatch in_latch;
+		BaseLogic::DLatch out_latch;
+
+	public:
+		void sim(BaseLogic::TriState PCLK, BaseLogic::TriState PARR, BaseLogic::TriState DB_PAR, BaseLogic::TriState PAL, BaseLogic::TriState F_AT,
+			BaseLogic::TriState FAT_in, BaseLogic::TriState PAL_in, BaseLogic::TriState PAD_in, BaseLogic::TriState DB_in,
+			BaseLogic::TriState& n_PAx);
+	};
+
+	class PAMUX_HighBit
+	{
+		BaseLogic::DLatch in_latch;
+		BaseLogic::DLatch out_latch;
+
+	public:
+		void sim(BaseLogic::TriState PCLK, BaseLogic::TriState PARR, BaseLogic::TriState PAH, BaseLogic::TriState F_AT,
+			BaseLogic::TriState FAT_in, BaseLogic::TriState PAH_in, BaseLogic::TriState PAD_in,
+			BaseLogic::TriState& n_PAx);
+	};
+
+	class PAMUX
+	{
+		PPU* ppu = nullptr;
+
+		PAMUX_LowBit par_lo[8]{};
+		PAMUX_HighBit par_hi[6]{};
 
 		BaseLogic::TriState PARR = BaseLogic::TriState::X;
 		BaseLogic::TriState PAH = BaseLogic::TriState::X;
@@ -954,22 +972,16 @@ namespace PPUSim
 		BaseLogic::TriState PAR_in[14]{};
 		BaseLogic::TriState PAD_in[14]{};
 
-		void sim_CountersControl();
-		void sim_CountersCarry();
 		void sim_Control();
-		void sim_FVCounter();
-		void sim_NTCounters();
-		void sim_TVCounter();
-		void sim_THCounter();
 
 	public:
-		PAR(PPU* parent);
-		~PAR();
+		PAMUX(PPU* parent);
+		~PAMUX();
 
 		void sim();
 
-		void sim_PARInputs();
-		void sim_PAROutputs();
+		void sim_MuxInputs();
+		void sim_MuxOutputs();
 	};
 
 	// Control Registers
@@ -1072,8 +1084,9 @@ namespace PPUSim
 
 	public:
 
-		PATGen* patgen = nullptr;
 		PAR* par = nullptr;
+		TileCnt* tilecnt = nullptr;
+		PAMUX* pamux = nullptr;
 		ScrollRegs* sccx = nullptr;
 		BGCol* bgcol = nullptr;
 
@@ -1509,8 +1522,9 @@ namespace PPUSim
 		friend FIFOLane;
 		friend FIFO;
 		friend DataReader;
-		friend PATGen;
 		friend PAR;
+		friend TileCnt;
+		friend PAMUX;
 		friend ScrollRegs;
 		friend BGCol;
 		friend RB_Bit;
@@ -1610,7 +1624,9 @@ namespace PPUSim
 			BaseLogic::TriState FH[3];			// Fine H value
 			BaseLogic::TriState FV[3];			// Fine V value
 			BaseLogic::TriState NTV;
+			BaseLogic::TriState NTVOut;
 			BaseLogic::TriState NTH;
+			BaseLogic::TriState NTHOut;
 			BaseLogic::TriState TV[5];
 			BaseLogic::TriState TH[5];
 			BaseLogic::TriState THO[5];
@@ -1644,7 +1660,7 @@ namespace PPUSim
 		struct FsmCommands
 		{
 			BaseLogic::TriState SEV;			// "Start Sprite Evaluation"
-			BaseLogic::TriState CLIP_O;			// "Clip Objects". 1: Do not show the left 8 screen points for sprites. Used to get the CLPO signal that goes into the OAM FIFO.
+			BaseLogic::TriState CLIP_O;			// "Clip Objects". 1: Do not show the left 8 screen points for sprites. Used to get the CLPO signal that goes into the Obj FIFO.
 			BaseLogic::TriState CLIP_B;			// "Clip Background". 1: Do not show the left 8 points of the screen for the background. Used to get the /CLPB signal that goes into the Data Reader.
 			BaseLogic::TriState ZHPOS;			// "Clear HPos". Clear the H counters in the sprite FIFO and start the FIFO
 			BaseLogic::TriState n_EVAL;			// 0: "Sprite Evaluation in Progress"
