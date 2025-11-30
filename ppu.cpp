@@ -566,11 +566,11 @@ namespace PPUSim
 	void FIFO::sim_HInv()
 	{
 		TriState n_PCLK = ppu->wire.n_PCLK;
-		TriState n_SH2 = ppu->wire.n_SH2;
+		TriState n_OBJ_RD_ATTR = ppu->wire.n_OBJ_RD_ATTR;
 		TriState OB6 = ppu->wire.OB[6];
 		TriState PD_FIFO = ppu->wire.PD_FIFO;
 
-		HINV_FF.set(MUX(NOR(n_PCLK, n_SH2), NOT(NOT(HINV_FF.get())), OB6));
+		HINV_FF.set(MUX(NOR(n_PCLK, n_OBJ_RD_ATTR), NOT(NOT(HINV_FF.get())), OB6));
 
 		auto HINV = HINV_FF.get();
 
@@ -736,7 +736,7 @@ namespace PPUSim
 	void FIFO::sim_SpriteH()
 	{
 		TriState n_PCLK = ppu->wire.n_PCLK;
-		TriState PAR_O = ppu->fsm.PARO;
+		TriState OBJ_READ = ppu->fsm.OBJ_READ;
 		TriState H0_DD = ppu->wire.H0_Dash2;
 		TriState H1_DD = ppu->wire.H1_Dash2;
 		TriState H2_DD = ppu->wire.H2_Dash2;
@@ -749,15 +749,15 @@ namespace PPUSim
 
 		DMX3(in, dec_out);
 
-		sh2_latch.set(MUX(PAR_O, TriState::Zero, dec_out[2]), n_PCLK);
-		sh3_latch.set(MUX(PAR_O, TriState::Zero, dec_out[3]), n_PCLK);
-		sh5_latch.set(MUX(PAR_O, TriState::Zero, dec_out[5]), n_PCLK);
-		sh7_latch.set(MUX(PAR_O, TriState::Zero, dec_out[7]), n_PCLK);
+		sh2_latch.set(MUX(OBJ_READ, TriState::Zero, dec_out[2]), n_PCLK);
+		sh3_latch.set(MUX(OBJ_READ, TriState::Zero, dec_out[3]), n_PCLK);
+		sh5_latch.set(MUX(OBJ_READ, TriState::Zero, dec_out[5]), n_PCLK);
+		sh7_latch.set(MUX(OBJ_READ, TriState::Zero, dec_out[7]), n_PCLK);
 
-		ppu->wire.n_SH2 = sh2_latch.nget();
-		ppu->wire.n_SH3 = sh3_latch.nget();
-		ppu->wire.n_SH5 = sh5_latch.nget();
-		ppu->wire.n_SH7 = sh7_latch.nget();
+		ppu->wire.n_OBJ_RD_ATTR = sh2_latch.nget();
+		ppu->wire.n_OBJ_RD_X = sh3_latch.nget();
+		ppu->wire.n_OBJ_RD_A = sh5_latch.nget();
+		ppu->wire.n_OBJ_RD_B = sh7_latch.nget();
 	}
 
 #pragma region "FIFO Lane"
@@ -774,17 +774,17 @@ namespace PPUSim
 	void FIFOLane::sim_LaneControl(TriState HSel)
 	{
 		TriState n_PCLK = ppu->wire.n_PCLK;
-		TriState n_SH2 = ppu->wire.n_SH2;
-		TriState n_SH3 = ppu->wire.n_SH3;
-		TriState n_SH5 = ppu->wire.n_SH5;
-		TriState n_SH7 = ppu->wire.n_SH7;
+		TriState n_OBJ_RD_ATTR = ppu->wire.n_OBJ_RD_ATTR;
+		TriState n_OBJ_RD_X = ppu->wire.n_OBJ_RD_X;
+		TriState n_OBJ_RD_A = ppu->wire.n_OBJ_RD_A;
+		TriState n_OBJ_RD_B = ppu->wire.n_OBJ_RD_B;
 
 		hsel_latch.set(HSel, n_PCLK);
 
-		LDAT = NOR3(n_PCLK, hsel_latch.nget(), n_SH2);
-		LOAD = NOR3(n_PCLK, hsel_latch.nget(), n_SH3);
-		T_SR0 = NOR3(n_PCLK, hsel_latch.nget(), n_SH5);
-		T_SR1 = NOR3(n_PCLK, hsel_latch.nget(), n_SH7);
+		LDAT = NOR3(n_PCLK, hsel_latch.nget(), n_OBJ_RD_ATTR);
+		LOAD = NOR3(n_PCLK, hsel_latch.nget(), n_OBJ_RD_X);
+		T_SR0 = NOR3(n_PCLK, hsel_latch.nget(), n_OBJ_RD_A);
+		T_SR1 = NOR3(n_PCLK, hsel_latch.nget(), n_OBJ_RD_B);
 
 		ob0_latch[0].set(ppu->wire.OB[0], LDAT);
 		ob1_latch[0].set(ppu->wire.OB[1], LDAT);
@@ -1030,9 +1030,9 @@ namespace PPUSim
 		ioam_latch2.set(ioam_latch1.nget(), PCLK);
 		ppu->fsm.IOAM2 = ioam_latch2.nget();
 
-		paro_latch1.set(HPLA[9], n_PCLK);
-		paro_latch2.set(paro_latch1.nget(), PCLK);
-		ppu->fsm.PARO = paro_latch2.nget();
+		objrd_latch1.set(HPLA[9], n_PCLK);
+		objrd_latch2.set(objrd_latch1.nget(), PCLK);
+		ppu->fsm.OBJ_READ = objrd_latch2.nget();
 
 		nvis_latch1.set(HPLA[10], n_PCLK);
 		nvis_latch2.set(nvis_latch1.nget(), PCLK);
@@ -2084,7 +2084,8 @@ namespace PPUSim
 		sim_ParBits();
 
 		TriState n_H1_D = ppu->wire.nH1_Dash;
-		ppu->wire.PAD[3] = NOT(n_H1_D);
+		ppu->wire.PAT_ADR[3] = NOT(n_H1_D);
+		ppu->wire.PAT_ADR[13] = TriState::Zero;
 	}
 
 	void PAR::sim_Control()
@@ -2095,42 +2096,42 @@ namespace PPUSim
 		TriState BGSEL = ppu->wire.BGSEL;
 		TriState OBSEL = ppu->wire.OBSEL;
 		TriState O8_16 = ppu->wire.O8_16;
-		TriState PAR_O = ppu->fsm.PARO;
+		TriState OBJ_READ = ppu->fsm.OBJ_READ;
 
 		fnt_latch.set(NOT(NOR(NOT(H0_DD), nF_NT)), n_PCLK);
 		O = NOR(fnt_latch.get(), n_PCLK);
 		ob0_latch.set(ppu->wire.OB[0], O);
-		pad12_latch.set(MUX(PAR_O, BGSEL, MUX(O8_16, OBSEL, ob0_latch.nget())), n_PCLK);
+		pad12_latch.set(MUX(OBJ_READ, BGSEL, MUX(O8_16, OBSEL, ob0_latch.nget())), n_PCLK);
 
-		ppu->wire.PAD[12] = pad12_latch.nget();
+		ppu->wire.PAT_ADR[12] = pad12_latch.nget();
 	}
 
 	void PAR::sim_VInv()
 	{
 		TriState n_PCLK = ppu->wire.n_PCLK;
-		TriState n_SH2 = ppu->wire.n_SH2;
+		TriState n_OBJ_RD_ATTR = ppu->wire.n_OBJ_RD_ATTR;
 
-		VINV_FF.set(MUX(n_PCLK, MUX(NOR(n_PCLK, n_SH2), TriState::Z, ppu->wire.OB[7]), NOT(NOT(VINV_FF.get()))));
+		VINV_FF.set(MUX(n_PCLK, MUX(NOR(n_PCLK, n_OBJ_RD_ATTR), TriState::Z, ppu->wire.OB[7]), NOT(NOT(VINV_FF.get()))));
 		VINV = NOT(NOT(VINV_FF.get()));
 	}
 
 	void PAR::sim_ParBitsInv()
 	{
 		TriState n_PCLK = ppu->wire.n_PCLK;
-		TriState PAR_O = ppu->fsm.PARO;
+		TriState OBJ_READ = ppu->fsm.OBJ_READ;
 
 		for (size_t n = 0; n < 4; n++)
 		{
 			inv_bits[n].sim(n_PCLK, O, VINV, ppu->wire.OV[n], inv_bits_out[n]);
 		}
 
-		pad0_latch.set(MUX(PAR_O, ppu->wire.n_FVO[0], inv_bits_out[0]), n_PCLK);
-		pad1_latch.set(MUX(PAR_O, ppu->wire.n_FVO[1], inv_bits_out[1]), n_PCLK);
-		pad2_latch.set(MUX(PAR_O, ppu->wire.n_FVO[2], inv_bits_out[2]), n_PCLK);
+		pad0_latch.set(MUX(OBJ_READ, ppu->wire.n_FVO[0], inv_bits_out[0]), n_PCLK);
+		pad1_latch.set(MUX(OBJ_READ, ppu->wire.n_FVO[1], inv_bits_out[1]), n_PCLK);
+		pad2_latch.set(MUX(OBJ_READ, ppu->wire.n_FVO[2], inv_bits_out[2]), n_PCLK);
 
-		ppu->wire.PAD[0] = pad0_latch.nget();
-		ppu->wire.PAD[1] = pad1_latch.nget();
-		ppu->wire.PAD[2] = pad2_latch.nget();
+		ppu->wire.PAT_ADR[0] = pad0_latch.nget();
+		ppu->wire.PAT_ADR[1] = pad1_latch.nget();
+		ppu->wire.PAT_ADR[2] = pad2_latch.nget();
 	}
 
 	void PAR::sim_ParBit4()
@@ -2138,25 +2139,25 @@ namespace PPUSim
 		TriState n_PCLK = ppu->wire.n_PCLK;
 		TriState val_OB = ppu->wire.OB[0];
 		TriState val_PD = ppu->GetPDBit(0);
-		TriState PAR_O = ppu->fsm.PARO;
+		TriState OBJ_READ = ppu->fsm.OBJ_READ;
 		TriState O8_16 = ppu->wire.O8_16;
 		TriState val_OBPrev = inv_bits_out[3];
 
 		pdin_latch.set(NOT(val_PD), n_PCLK);
 		pdout_latch.set(pdin_latch.nget(), O);
 		ob_latch.set(val_OB, O);
-		pad4_latch.set(MUX(PAR_O, pdout_latch.nget(), MUX(O8_16, ob_latch.nget(), val_OBPrev)), n_PCLK);
-		ppu->wire.PAD[4] = pad4_latch.nget();
+		pad4_latch.set(MUX(OBJ_READ, pdout_latch.nget(), MUX(O8_16, ob_latch.nget(), val_OBPrev)), n_PCLK);
+		ppu->wire.PAT_ADR[4] = pad4_latch.nget();
 	}
 
 	void PAR::sim_ParBits()
 	{
 		TriState n_PCLK = ppu->wire.n_PCLK;
-		TriState PAR_O = ppu->fsm.PARO;
+		TriState OBJ_READ = ppu->fsm.OBJ_READ;
 
 		for (size_t n = 0; n < 7; n++)
 		{
-			bits[n].sim(n_PCLK, O, ppu->wire.OB[n + 1], ppu->GetPDBit(n + 1), PAR_O, ppu->wire.PAD[5 + n]);
+			bits[n].sim(n_PCLK, O, ppu->wire.OB[n + 1], ppu->GetPDBit(n + 1), OBJ_READ, ppu->wire.PAT_ADR[5 + n]);
 		}
 	}
 
@@ -2168,13 +2169,13 @@ namespace PPUSim
 		val_out = NOT(MUX(INV, out_latch.nget(), NOT(out_latch.nget())));
 	}
 
-	void ParBit::sim(TriState n_PCLK, TriState O, TriState val_OB, TriState val_PD, TriState PAR_O,
+	void ParBit::sim(TriState n_PCLK, TriState O, TriState val_OB, TriState val_PD, TriState OBJ_READ,
 		TriState& PADx)
 	{
 		pdin_latch.set(NOT(val_PD), n_PCLK);
 		pdout_latch.set(pdin_latch.nget(), O);
 		ob_latch.set(val_OB, O);
-		padx_latch.set(MUX(PAR_O, pdout_latch.nget(), ob_latch.nget()), n_PCLK);
+		padx_latch.set(MUX(OBJ_READ, pdout_latch.nget(), ob_latch.nget()), n_PCLK);
 		PADx = padx_latch.nget();
 	}
 
@@ -2395,38 +2396,37 @@ namespace PPUSim
 	{
 		TriState BLNK = ppu->fsm.BLNK;
 
-		FAT_in[0] = ppu->wire.THO[2];
-		FAT_in[1] = ppu->wire.THO[3];
-		FAT_in[2] = ppu->wire.THO[4];
-		FAT_in[3] = ppu->wire.TVO[2];
-		FAT_in[4] = ppu->wire.TVO[3];
-		FAT_in[5] = ppu->wire.TVO[4];
-		FAT_in[6] = TriState::One;
-		FAT_in[7] = TriState::One;
-		FAT_in[8] = TriState::One;
-		FAT_in[9] = TriState::One;
+		AT_ADR[0] = ppu->wire.THO[2];
+		AT_ADR[1] = ppu->wire.THO[3];
+		AT_ADR[2] = ppu->wire.THO[4];
+		AT_ADR[3] = ppu->wire.TVO[2];
+		AT_ADR[4] = ppu->wire.TVO[3];
+		AT_ADR[5] = ppu->wire.TVO[4];
+		AT_ADR[6] = TriState::One;
+		AT_ADR[7] = TriState::One;
+		AT_ADR[8] = TriState::One;
+		AT_ADR[9] = TriState::One;
 
-		PAR_in[0] = ppu->wire.THO[0];
-		PAR_in[1] = ppu->wire.THO[1];
-		PAR_in[2] = ppu->wire.THO[2];
-		PAR_in[3] = ppu->wire.THO[3];
-		PAR_in[4] = ppu->wire.THO[4];
-		PAR_in[5] = ppu->wire.TVO[0];
-		PAR_in[6] = ppu->wire.TVO[1];
-		PAR_in[7] = ppu->wire.TVO[2];
-		PAR_in[8] = ppu->wire.TVO[3];
-		PAR_in[9] = ppu->wire.TVO[4];
+		NT_ADR[0] = ppu->wire.THO[0];
+		NT_ADR[1] = ppu->wire.THO[1];
+		NT_ADR[2] = ppu->wire.THO[2];
+		NT_ADR[3] = ppu->wire.THO[3];
+		NT_ADR[4] = ppu->wire.THO[4];
+		NT_ADR[5] = ppu->wire.TVO[0];
+		NT_ADR[6] = ppu->wire.TVO[1];
+		NT_ADR[7] = ppu->wire.TVO[2];
+		NT_ADR[8] = ppu->wire.TVO[3];
+		NT_ADR[9] = ppu->wire.TVO[4];
 
-		FAT_in[10] = PAR_in[10] = ppu->wire.NTHOut;
-		FAT_in[11] = PAR_in[11] = ppu->wire.NTVOut;
-		FAT_in[12] = PAR_in[12] = NOR(ppu->wire.n_FVO[0], NOT(BLNK));
-		FAT_in[13] = PAR_in[13] = NOT(NOR(ppu->wire.FVO[1], NOT(BLNK)));
+		AT_ADR[10] = NT_ADR[10] = ppu->wire.NTHOut;
+		AT_ADR[11] = NT_ADR[11] = ppu->wire.NTVOut;
+		AT_ADR[12] = NT_ADR[12] = NOR(ppu->wire.n_FVO[0], NOT(BLNK));
+		AT_ADR[13] = NT_ADR[13] = NOT(NOR(ppu->wire.FVO[1], NOT(BLNK)));
 
-		for (size_t n = 0; n < 13; n++)
+		for (size_t n = 0; n < 14; n++)
 		{
-			PAD_in[n] = ppu->wire.PAD[n];
+			PAT_ADR[n] = ppu->wire.PAT_ADR[n];
 		}
-		PAD_in[13] = TriState::Zero;
 	}
 
 	void PAMUX::sim_MuxOutputs()
@@ -2437,12 +2437,12 @@ namespace PPUSim
 
 		for (size_t n = 0; n < 8; n++)
 		{
-			par_lo[n].sim(PCLK, PARR, DB_PAR, PAL, F_AT, FAT_in[n], PAR_in[n], PAD_in[n], ppu->GetDBBit(n), ppu->wire.n_PA_Bot[n]);
+			par_lo[n].sim(PCLK, PARR, DB_PAR, PAL, F_AT, AT_ADR[n], NT_ADR[n], PAT_ADR[n], ppu->GetDBBit(n), ppu->wire.n_PA_Bot[n]);
 		}
 
 		for (size_t n = 0; n < 6; n++)
 		{
-			par_hi[n].sim(PCLK, PARR, PAH, F_AT, FAT_in[8 + n], PAR_in[8 + n], PAD_in[8 + n], ppu->wire.n_PA_Top[n]);
+			par_hi[n].sim(PCLK, PARR, PAH, F_AT, AT_ADR[8 + n], NT_ADR[8 + n], PAT_ADR[8 + n], ppu->wire.n_PA_Top[n]);
 		}
 	}
 
@@ -2893,16 +2893,16 @@ namespace PPUSim
 
 	// Sprite Comparison
 
-	OAMEval::OAMEval(PPU* parent)
+	ObjEval::ObjEval(PPU* parent)
 	{
 		ppu = parent;
 	}
 
-	OAMEval::~OAMEval()
+	ObjEval::~ObjEval()
 	{
 	}
 
-	void OAMEval::sim()
+	void ObjEval::sim()
 	{
 		sim_StepJohnson();
 		sim_Comparator();
@@ -2920,7 +2920,7 @@ namespace PPUSim
 		sim_OAMAddress();
 	}
 
-	void OAMEval::sim_StepJohnson()
+	void ObjEval::sim_StepJohnson()
 	{
 		TriState PCLK = ppu->wire.PCLK;
 		TriState H0_DD = ppu->wire.H0_Dash2;
@@ -2938,7 +2938,7 @@ namespace PPUSim
 		COPY_OVF = NOT(NOR3(i2_latch[5].nget(), i2_latch[3].nget(), i2_latch[1].nget()));
 	}
 
-	void OAMEval::sim_Comparator()
+	void ObjEval::sim_Comparator()
 	{
 		TriState PCLK = ppu->wire.PCLK;
 		TriState O8_16 = ppu->wire.O8_16;
@@ -2971,7 +2971,7 @@ namespace PPUSim
 		OVZ = NOR7(temp);
 	}
 
-	void OAMEval::sim_ComparisonFSM()
+	void ObjEval::sim_ComparisonFSM()
 	{
 		TriState n_PCLK = ppu->wire.n_PCLK;
 		TriState PCLK = ppu->wire.PCLK;
@@ -2981,7 +2981,7 @@ namespace PPUSim
 		TriState n_VIS = ppu->fsm.nVIS;
 		TriState SPR_OV = get_SPR_OV();
 		TriState S_EV = ppu->fsm.SEV;
-		TriState PAR_O = ppu->fsm.PARO;
+		TriState OBJ_READ = ppu->fsm.OBJ_READ;
 		TriState NotUsed{};
 
 		// PD/FIFO
@@ -3012,10 +3012,10 @@ namespace PPUSim
 
 		TriState nFF2_Out{};
 		eval_FF2.sim(PCLK, NOT(S_EV), DO_COPY, NotUsed, nFF2_Out);
-		eval_FF1.sim(PCLK, NOT(PAR_O), nFF2_Out, ppu->wire.n_SPR0_EV, NotUsed);
+		eval_FF1.sim(PCLK, NOT(OBJ_READ), nFF2_Out, ppu->wire.n_SPR0_EV, NotUsed);
 	}
 
-	void OAMEval::sim_MainCounterControl()
+	void ObjEval::sim_MainCounterControl()
 	{
 		TriState n_PCLK = ppu->wire.n_PCLK;
 		TriState PCLK = ppu->wire.PCLK;
@@ -3063,12 +3063,12 @@ namespace PPUSim
 		OMOUT = NOR(OMSTEP, W3_Enable);
 	}
 
-	void OAMEval::sim_MainCounter()
+	void ObjEval::sim_MainCounter()
 	{
 		TriState n_PCLK = ppu->wire.n_PCLK;
 		TriState BLNK = ppu->fsm.BLNK;
 		TriState OMFG = this->OMFG;
-		TriState PAR_O = ppu->fsm.PARO;
+		TriState OBJ_READ = ppu->fsm.OBJ_READ;
 		TriState OMOUT = this->OMOUT;
 		TriState OMSTEP = this->OMSTEP;
 		TriState n_out[8]{};
@@ -3077,22 +3077,22 @@ namespace PPUSim
 		TriState carry_out;
 
 		carry_in = TriState::One;
-		carry_out = MainCounter[0].sim(OMOUT, W3_Enable, OMSTEP, Mode4, PAR_O, ppu->GetDBBit(0), carry_in, OAM_x[0], n_out[0]);
+		carry_out = MainCounter[0].sim(OMOUT, W3_Enable, OMSTEP, Mode4, OBJ_READ, ppu->GetDBBit(0), carry_in, OAM_x[0], n_out[0]);
 
 		carry_in = carry_out;
-		MainCounter[1].sim(OMOUT, W3_Enable, OMSTEP, Mode4, PAR_O, ppu->GetDBBit(1), carry_in, OAM_x[1], n_out[1]);
+		MainCounter[1].sim(OMOUT, W3_Enable, OMSTEP, Mode4, OBJ_READ, ppu->GetDBBit(1), carry_in, OAM_x[1], n_out[1]);
 
 		auto out01 = NOT(NOR(n_out[0], n_out[1]));
 		auto out01m = AND(out01, NOT(Mode4));
 
 		carry_in = NAND(NOT(Mode4), out01);
-		MainCounter[2].sim(OMOUT, W3_Enable, OMSTEP, TriState::Zero, PAR_O, ppu->GetDBBit(2), carry_in, OAM_x[2], n_out[2]);
+		MainCounter[2].sim(OMOUT, W3_Enable, OMSTEP, TriState::Zero, OBJ_READ, ppu->GetDBBit(2), carry_in, OAM_x[2], n_out[2]);
 
 		carry_in = NOR(out01m, n_out[2]);
-		MainCounter[3].sim(OMOUT, W3_Enable, OMSTEP, TriState::Zero, PAR_O, ppu->GetDBBit(3), carry_in, OAM_x[3], n_out[3]);
+		MainCounter[3].sim(OMOUT, W3_Enable, OMSTEP, TriState::Zero, OBJ_READ, ppu->GetDBBit(3), carry_in, OAM_x[3], n_out[3]);
 
 		carry_in = NOR3(out01m, n_out[2], n_out[3]);
-		MainCounter[4].sim(OMOUT, W3_Enable, OMSTEP, TriState::Zero, PAR_O, ppu->GetDBBit(4), carry_in, OAM_x[4], n_out[4]);
+		MainCounter[4].sim(OMOUT, W3_Enable, OMSTEP, TriState::Zero, OBJ_READ, ppu->GetDBBit(4), carry_in, OAM_x[4], n_out[4]);
 
 		TriState temp[6]{};
 
@@ -3101,20 +3101,20 @@ namespace PPUSim
 		temp[2] = n_out[3];
 		temp[3] = n_out[4];
 		carry_in = NOR4(temp);
-		MainCounter[5].sim(OMOUT, W3_Enable, OMSTEP, TriState::Zero, PAR_O, ppu->GetDBBit(5), carry_in, OAM_x[5], n_out[5]);
+		MainCounter[5].sim(OMOUT, W3_Enable, OMSTEP, TriState::Zero, OBJ_READ, ppu->GetDBBit(5), carry_in, OAM_x[5], n_out[5]);
 
 		temp[4] = n_out[5];
 		carry_in = NOR5(temp);
-		MainCounter[6].sim(OMOUT, W3_Enable, OMSTEP, TriState::Zero, PAR_O, ppu->GetDBBit(6), carry_in, OAM_x[6], n_out[6]);
+		MainCounter[6].sim(OMOUT, W3_Enable, OMSTEP, TriState::Zero, OBJ_READ, ppu->GetDBBit(6), carry_in, OAM_x[6], n_out[6]);
 
 		temp[5] = n_out[6];
 		carry_in = NOR6(temp);
-		OMV = MainCounter[7].sim(OMOUT, W3_Enable, OMSTEP, TriState::Zero, PAR_O, ppu->GetDBBit(7), carry_in, OAM_x[7], n_out[7]);
+		OMV = MainCounter[7].sim(OMOUT, W3_Enable, OMSTEP, TriState::Zero, OBJ_READ, ppu->GetDBBit(7), carry_in, OAM_x[7], n_out[7]);
 
 		omv_latch.set(OMV, n_PCLK);
 	}
 
-	void OAMEval::sim_TempCounterControlBeforeCounter()
+	void ObjEval::sim_TempCounterControlBeforeCounter()
 	{
 		TriState n_PCLK = ppu->wire.n_PCLK;
 		TriState n_EVAL = ppu->fsm.n_EVAL;
@@ -3122,18 +3122,18 @@ namespace PPUSim
 		TriState I_OAM2 = ppu->fsm.IOAM2;
 		TriState H0_D = ppu->wire.H0_Dash;
 		TriState n_H2_D = ppu->wire.nH2_Dash;
-		TriState PAR_O = ppu->fsm.PARO;
+		TriState OBJ_READ = ppu->fsm.OBJ_READ;
 
 		eval_latch.set(n_EVAL, n_PCLK);
 		ORES = NOR(n_PCLK, eval_latch.get());
 		nomfg_latch.set(NOT(OMFG), n_PCLK);
 		ioam2_latch.set(I_OAM2, n_PCLK);
-		auto DontStep = NOR(NOR(NOR(nomfg_latch.get(), ioam2_latch.get()), H0_D), AND(n_H2_D, PAR_O));
+		auto DontStep = NOR(NOR(NOR(nomfg_latch.get(), ioam2_latch.get()), H0_D), AND(n_H2_D, OBJ_READ));
 		temp_latch1.set(NAND(OAMCTR2_FF.nget(), n_EVAL), n_PCLK);
 		OSTEP = NOR3(temp_latch1.get(), n_PCLK, DontStep);
 	}
 
-	void OAMEval::sim_TempCounter()
+	void ObjEval::sim_TempCounter()
 	{
 		TriState n_PCLK = ppu->wire.n_PCLK;
 		TriState carry = TriState::One;
@@ -3150,7 +3150,7 @@ namespace PPUSim
 		TMV = carry;			// carry_out from the most significant bit
 	}
 
-	void OAMEval::sim_TempCounterControlAfterCounter()
+	void ObjEval::sim_TempCounterControlAfterCounter()
 	{
 		TriState n_PCLK = ppu->wire.n_PCLK;
 
@@ -3163,7 +3163,7 @@ namespace PPUSim
 	/// Sprite Overflow logic should be simulated after the counters work. 
 	/// It captures the fact of their overflow (and terminates the current sprite process)
 	/// </summary>
-	void OAMEval::sim_SpriteOVF()
+	void ObjEval::sim_SpriteOVF()
 	{
 		TriState n_PCLK = ppu->wire.n_PCLK;
 		TriState H0_D = ppu->wire.H0_Dash;
@@ -3190,7 +3190,7 @@ namespace PPUSim
 		ppu->SetDBBit(5, MUX(R2_Enable, TriState::Z, SPR_OV_REG_FF.get()));
 	}
 
-	void OAMEval::sim_OAMAddress()
+	void ObjEval::sim_OAMAddress()
 	{
 		TriState n_VIS = ppu->fsm.nVIS;
 		TriState H0_DD = ppu->wire.H0_Dash2;
@@ -3305,7 +3305,7 @@ namespace PPUSim
 		n_Q = NOT(Q);
 	}
 
-	TriState OAMEval::get_SPR_OV()
+	TriState ObjEval::get_SPR_OV()
 	{
 		return SPR_OV_FF.get();
 	}
@@ -4539,7 +4539,7 @@ namespace PPUSim
 			hv_fsm = new FSM(this);
 			cram = new CRAM(this);
 			mux = new Mux(this);
-			eval = new OAMEval(this);
+			eval = new ObjEval(this);
 			oam = new OAM(this);
 			fifo = new FIFO(this);
 			data_reader = new DataReader(this);
