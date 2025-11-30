@@ -203,7 +203,7 @@ namespace PPUSim
 		}
 	}
 
-	// Palette (Color RAM)
+	// Color Generator RAM (Palette)
 
 	void CBBit::sim(size_t bit_num, TriState* cell, TriState n_OE)
 	{
@@ -314,14 +314,14 @@ namespace PPUSim
 	void CRAM::sim_CRAMDecoder()
 	{
 		TriState col_in[2]{};
-		col_in[0] = ppu->wire.PAL[2];
-		col_in[1] = ppu->wire.PAL[3];
+		col_in[0] = ppu->wire.CGA[2];
+		col_in[1] = ppu->wire.CGA[3];
 		DMX2(col_in, COL);
 
 		TriState row_in[3]{};
-		row_in[0] = ppu->wire.PAL[0];
-		row_in[1] = ppu->wire.PAL[1];
-		row_in[2] = ppu->wire.PAL[4];
+		row_in[0] = ppu->wire.CGA[0];
+		row_in[1] = ppu->wire.CGA[1];
+		row_in[2] = ppu->wire.CGA[4];
 		DMX3(row_in, ROW);
 
 		for (size_t n = 0; n < 8; n++)
@@ -1616,12 +1616,12 @@ namespace PPUSim
 			ppu->wire.n_EXT_Out[n] = NOT(MUX(OCOL, ppu->wire.BGC[n], step1[n].nget()));
 			step2[n].set(ppu->wire.n_EXT_Out[n], n_PCLK);
 			step3[n].set(MUX(EXT, step2[n].nget(), ppu->wire.EXT_In[n]), PCLK);
-			ppu->wire.PAL[n] = NOT(MUX(TH_MUX, step3[n].nget(), dir_color[n].nget()));
+			ppu->wire.CGA[n] = NOT(MUX(TH_MUX, step3[n].nget(), dir_color[n].nget()));
 		}
 
 		tho4_latch.set(ppu->wire.THO[4], PCLK);
 		pal4_latch.set(MUX(TH_MUX, n_PAL4, tho4_latch.nget()), PCLK);
-		ppu->wire.PAL[4] = pal4_latch.nget();
+		ppu->wire.CGA[4] = pal4_latch.nget();
 
 		sim_Spr0Hit();
 	}
@@ -2447,23 +2447,23 @@ namespace PPUSim
 	}
 
 	void PAMUX_LowBit::sim(TriState PCLK, TriState PARR, TriState DB_PAR, TriState PAL, TriState F_AT,
-		TriState FAT_in, TriState PAL_in, TriState PAD_in, TriState DB_in,
+		TriState AT_ADR, TriState NT_ADR, TriState PAT_ADR, TriState DB_in,
 		TriState& n_PAx)
 	{
 		auto val = MUX(DB_PAR,
 			MUX(PARR,
-				MUX(PAL, MUX(F_AT, TriState::Z, FAT_in), PAL_in), PAD_in), DB_in);
+				MUX(PAL, MUX(F_AT, TriState::Z, AT_ADR), NT_ADR), PAT_ADR), DB_in);
 		in_latch.set(val, TriState::One);
 		out_latch.set(in_latch.nget(), PCLK);
 		n_PAx = out_latch.get();
 	}
 
 	void PAMUX_HighBit::sim(TriState PCLK, TriState PARR, TriState PAH, TriState F_AT,
-		TriState FAT_in, TriState PAH_in, TriState PAD_in,
+		TriState AT_ADR, TriState NT_ADR, TriState PAT_ADR,
 		TriState& n_PAx)
 	{
 		auto val = MUX(PARR,
-			MUX(PAH, MUX(F_AT, TriState::Z, FAT_in), PAH_in), PAD_in);
+			MUX(PAH, MUX(F_AT, TriState::Z, AT_ADR), NT_ADR), PAT_ADR);
 		in_latch.set(val, TriState::One);
 		out_latch.set(in_latch.nget(), PCLK);
 		n_PAx = out_latch.get();
